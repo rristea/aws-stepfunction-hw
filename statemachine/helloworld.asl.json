@@ -1,0 +1,11 @@
+{
+  "Comment": "A Hello World example invoking a Lambda function.",
+  "StartAt": "Hello World",
+  "States": {
+    "Hello World": {
+      "Type": "Task",
+      "Resource": "${HelloWorldFunctionArn}",
+      "End": true
+    }
+  }
+}

@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS SAM template which creates a StepFunction, a Lambda that runs it and an API for it.
+Resources:
+    RunFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+            Handler: functions/run.handler
+            Runtime: nodejs12.x
+            MemorySize: 128
+            Timeout: 15
+            Events:
+                ApiEvent:
+                    Type: Api
+                    Properties:
+                        Path: /
+                        Method: get
+            Environment:
+                Variables:
+                    HELLOWORLD_STATEMACHINE_ARN: !Ref HelloWorldStateMachine
+            Policies:
+                -
+                    Version: '2012-10-17'
+                    Statement:
+                        -
+                            Effect: Allow
+                            Action:
+                                - states:*
+                            Resource:
+                                - !Ref HelloWorldStateMachine
+                                - arn:aws:states:*:*:execution:HelloWorldStateMachine*:*
+    HelloWorldStateMachine:
+      Type: AWS::Serverless::StateMachine
+      Properties:
+        DefinitionUri: statemachine/helloworld.asl.json
+        DefinitionSubstitutions:
+            HelloWorldFunctionArn: !GetAtt HelloWorldFunction.Arn
+        Policies:
+            - LambdaInvokePolicy:
+                FunctionName: !Ref HelloWorldFunction
+    HelloWorldFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+            Handler: functions/helloworld.handler
+            Runtime: nodejs12.x
+            MemorySize: 128
+            Timeout: 15
+Outputs:
+    HelloWorldEndpoint:
+        Description: "Hello World API Prod stage endpoint"
+        Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
